@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relógio Digital e Contagem Regressiva</title>
+    <!-- Carrega Tailwind CSS para estilização moderna e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define a fonte Inter como principal */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background-color: #f0f4f8; /* Fundo suave */
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+    <div id="clock-container" class="w-full max-w-lg bg-white p-8 md:p-12 shadow-2xl rounded-xl text-center mb-8">
+        
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-6 border-b-2 border-indigo-500 pb-2">
+            Hora Certa (Brasília)
+        </h1>
+
+        <!-- Container para a hora com estilo de relógio LED -->
+        <div id="time-display" class="text-7xl md:text-9xl font-mono font-bold text-indigo-700 bg-gray-100 p-6 rounded-lg mb-4 tracking-wider shadow-inner">
+            --:--:--
+        </div>
+
+        <!-- Container para a data -->
+        <div id="date-display" class="text-xl md:text-2xl text-gray-600 font-medium mb-8">
+            Dia da Semana, Dia de Mês de Ano
+        </div>
+
+        <!-- Fuso Horário -->
+        <p class="text-sm text-gray-400">Fuso Horário Padrão: UTC-3 (Horário de Brasília)</p>
+    </div>
+
+    <!-- SEÇÃO DE CONTAGEM REGRESSIVA -->
+    <div id="countdown-container" class="w-full max-w-lg bg-white p-6 md:p-8 shadow-2xl rounded-xl text-center">
+        <h2 class="text-2xl font-bold text-gray-700 mb-6 border-b border-pink-500 pb-2">
+            Próximos Eventos 2026
+        </h2>
+
+        <div id="countdown-list" class="space-y-4 text-left">
+            <!-- Os contadores serão inseridos aqui pelo JavaScript -->
+        </div>
+
+    </div>
+
+    <script>
+        // Define os eventos de 2026 com suas datas de início
+        // As datas são definidas como 00:00:00 do fuso horário de Brasília (UTC-3)
+        const events2026 = [
+            { name: "Carnaval 2026", targetDate: new Date("2026-02-13T00:00:00-03:00").getTime() },
+            { name: "Copa do Mundo FIFA 2026", targetDate: new Date("2026-06-11T00:00:00-03:00").getTime() },
+            { name: "Eleições Gerais 2026 - 1º Turno", targetDate: new Date("2026-10-04T00:00:00-03:00").getTime() },
+        ];
+
+        // Função para formatar a hora e data e atualizar o display do relógio
+        function updateClock() {
+            const now = new Date();
+
+            const timeOptions = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: 'America/Sao_Paulo'
+            };
+
+            const dateOptions = {
+                weekday: 'long', 
+                day: 'numeric',   
+                month: 'long',  
+                year: 'numeric',  
+                timeZone: 'America/Sao_Paulo'
+            };
+
+            const timeString = now.toLocaleTimeString('pt-BR', timeOptions);
+            const dateStringRaw = now.toLocaleDateString('pt-BR', dateOptions);
+            const dateString = dateStringRaw.charAt(0).toUpperCase() + dateStringRaw.slice(1);
+
+            document.getElementById('time-display').textContent = timeString;
+            document.getElementById('date-display').textContent = dateString;
+        }
+
+        // Função para calcular e atualizar todas as contagens regressivas
+        function updateCountdowns() {
+            const nowTimestamp = new Date().getTime();
+            const countdownList = document.getElementById('countdown-list');
+
+            if (countdownList.children.length === 0) {
+                // Cria os elementos HTML na primeira execução
+                events2026.forEach((event, index) => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.className = 'p-3 bg-gray-50 rounded-lg shadow-md';
+                    eventDiv.innerHTML = `
+                        <h3 class="text-lg font-semibold text-gray-800 mb-1">${event.name}</h3>
+                        <p id="countdown-${index}" class="text-2xl font-mono font-bold text-pink-600">
+                            Calculando...
+                        </p>
+                    `;
+                    countdownList.appendChild(eventDiv);
+                });
+            }
+
+            // Atualiza os valores a cada segundo
+            events2026.forEach((event, index) => {
+                const targetTimestamp = event.targetDate;
+                let remainingTime = targetTimestamp - nowTimestamp;
+                const countdownElement = document.getElementById(`countdown-${index}`);
+                
+                if (!countdownElement) return; // Segurança
+
+                if (remainingTime <= 0) {
+                    countdownElement.textContent = "🥳 O Evento Começou!";
+                    countdownElement.classList.remove('text-pink-600');
+                    countdownElement.classList.add('text-green-600');
+                    return;
+                }
+                
+                // Conversão de milissegundos para D/H/M/S
+                const MS_PER_SECOND = 1000;
+                const MS_PER_MINUTE = MS_PER_SECOND * 60;
+                const MS_PER_HOUR = MS_PER_MINUTE * 60;
+                const MS_PER_DAY = MS_PER_HOUR * 24;
+
+                const days = Math.floor(remainingTime / MS_PER_DAY);
+                remainingTime %= MS_PER_DAY;
+
+                const hours = Math.floor(remainingTime / MS_PER_HOUR);
+                remainingTime %= MS_PER_HOUR;
+
+                const minutes = Math.floor(remainingTime / MS_PER_MINUTE);
+                remainingTime %= MS_PER_MINUTE;
+
+                const seconds = Math.floor(remainingTime / MS_PER_SECOND);
+                
+                // Formatação da string de contagem regressiva
+                const countdownString = 
+                    `${days} Dias, ` +
+                    `${hours.toString().padStart(2, '0')}h : ` +
+                    `${minutes.toString().padStart(2, '0')}m : ` +
+                    `${seconds.toString().padStart(2, '0')}s`;
+
+                countdownElement.textContent = countdownString;
+            });
+        }
+
+        // Função principal de inicialização e loop
+        function initApp() {
+            updateClock();
+            updateCountdowns();
+        }
+
+        // 1. Executa a função imediatamente ao carregar
+        initApp();
+
+        // 2. Configura um intervalo para chamar as funções a cada 1 segundo
+        setInterval(initApp, 1000);
+    </script>
+</body>
+</html>
